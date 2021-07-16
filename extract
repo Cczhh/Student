@@ -1,0 +1,9 @@
+import requests
+import json
+import pprint
+
+url = 'https://api.cosmostation.io/v1/status'
+r = requests.get(url).text
+r = json.loads(r)
+print(type(r))                # type is dict
+pprint.pprint(r['total_circulating_tokens'], indent=2)
