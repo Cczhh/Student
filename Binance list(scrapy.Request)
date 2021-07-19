@@ -1,0 +1,38 @@
+# 用scrapy.Request输出多页数下的Binance公告列表
+import scrapy
+import re
+
+
+class BinanceSpider(scrapy.Spider):
+    name = 'binance'
+    # allowed_domains = ['www.binance.com/zh-CN/support/announcement/c-48']
+    start_urls = ['https://www.binance.com/zh-CN/support/announcement/c-48']
+    url = 'https://www.binance.com/bapi/composite/v1/public/cms/article/catalog/list/query?catalogId=48&pageNo=%d' \
+          '&pageSize=15 '           # XHR每次传出一个list，pageNo的参数都不一样，这里将他换为%d作为一个通用模板
+    page_num = 2           # 第一页存在start_urls的html中，因此从第二页开始
+
+    def parse(self, response):
+        if self.page_num <= 2:
+            # 第一页
+            obj = re.compile(r'"css-1ej4hfo">(?P<title>.*?)</a>', re.S)
+            r = obj.finditer(response.text)
+            for it in r:
+                print(it.group('title'))
+            print('the page 1\n\n')
+
+        # 第n页(n>1)
+        new_url = format(self.url % self.page_num)
+        if self.page_num <= 10:         # 这里的10则起着 确保运行顺利跳到parse1的作用。
+            yield scrapy.Request(url=new_url, callback=self.parse1)     # 跳转到parse1
+
+    def parse1(self, response):           # 目的在于避开打印start_url的html中与下面的obj匹配的内容
+        self.page_num += 1
+        new_url = format(self.url % self.page_num)           # 依次给不同的list赋予不同的pageNo值
+        obj = re.compile(r'"title":"(?P<title>.*?)",', re.S)
+        r = obj.finditer(response.text)
+        for it in r:
+            print(it.group('title'))
+        print('the page', self.page_num-1, '\n\n')
+        new_url = format(self.url % self.page_num)
+        if self.page_num <= 10:          # 这里的10决定着打印目录页数是10张（可改为50（全部页数））
+            yield scrapy.Request(url=new_url, callback=self.parse1)
