@@ -1,0 +1,30 @@
+# BitZ的公告列表（已完成）
+import requests
+import re
+
+url = 'https://help.bitz.ai/article/list'
+proxy = {'http': 'http://192.168.101.20:8123'}
+for x in range(1, 14):
+    data = {
+        'page_size': 10,
+        'current_page': x,
+        'section_id': 100000019,
+        'channel': 'web',
+        'token': '',
+        'lang': 'zh',
+        'BZ-SessionId': 'iXVzQCmk9o_mdqZzabYC83fHuVc0aIghn5ie8CGbSbAHxve-cj1bxZB-9NDx0klMy8cBQ3Q7l29aPhfL3swXRQ',
+        'sa_origin_id': '-unknow-',
+        'nonce': 223986,
+        '_CDID': 100002,
+        '_CDCODE': 'ffe5dc34c015a91d941a6c7a56746b7d',
+    }
+    r = requests.post(url, data=data)
+
+    obj = re.compile(r'"title_zh":"(?P<name>.*?)","title_zh_HK"', re.S)
+    txt = obj.finditer(r.text)
+    for it in txt:
+        print(it.group("name"))
+    print("It's the page ", x, "\n")
+
+# 能爬取数据，但是代码中的代理在post中却没有使用上
+
